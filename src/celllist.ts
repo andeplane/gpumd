@@ -2,11 +2,13 @@ export default class CellList {
     numberOfCells: number
     cells: Int32Array[]
     cellCount: Int32Array
+    time: number
 
     constructor() {
         this.numberOfCells = 0
         this.cells = []
         this.cellCount = new Int32Array()
+        this.time = 0
     }
 
     getCellIndex = (cx: number, cy: number, cz: number) => {
@@ -18,6 +20,7 @@ export default class CellList {
     }
 
     build = (positions: Float32Array, numParticles: number, systemSize: number, rCut: number) => {
+        const start = performance.now()
         this.numberOfCells = Math.floor(systemSize / rCut)
         const numberOfCellsTotal = this.numberOfCells * this.numberOfCells * this.numberOfCells
         if (numberOfCellsTotal > this.cellCount.length) {
@@ -39,6 +42,8 @@ export default class CellList {
             const cellIndex = this.getCellIndex(cx, cy, cz)
             this.cells[cellIndex][this.cellCount[cellIndex]++] = i
         }
+        const end = performance.now()
+        this.time += end - start
     }
 
 }

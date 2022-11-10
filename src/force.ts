@@ -13,14 +13,17 @@ export default class LennardJones {
     rCut: number
     cellList?: CellList
     neighborList?: NeighborList
-    
+    time: number
+
     constructor({epsilon, sigma, rCut}: LennardJonesProps) {
         this.epsilon = epsilon
         this.sigma = sigma
         this.rCut = rCut
+        this.time = 0
     }
     
     calculateAll(numParticles: number, systemSize: number, positions: Float32Array, forces: Float32Array) {
+        const start = performance.now()
         const sigma6 = Math.pow(this.sigma, 6)
         const epsilon24 = 24 * this.epsilon
         // Clear forces
@@ -67,6 +70,8 @@ export default class LennardJones {
                 }
             }
         }
+        const end = performance.now()
+        this.time += end-start
     }
     
     calculateCells(numParticles: number, systemSize: number, positions: Float32Array, forces: Float32Array) {
@@ -74,6 +79,8 @@ export default class LennardJones {
             this.cellList = new CellList()
         }
         this.cellList.build(positions, numParticles, systemSize, this.rCut)
+        const start = performance.now()
+
         const sigma6 = Math.pow(this.sigma, 6)
         const epsilon24 = 24 * this.epsilon
         // Clear forces
@@ -88,7 +95,7 @@ export default class LennardJones {
                 for(let dy=-1; dy<=1; dy++) {
                     for(let dz=-1; dz<=1; dz++) {
                         const cellIndex = this.cellList.getCellIndexPeriodic(cx + dx, cy + dy, cz + dz)
-                        for (let i = 0; i < this.cellList.cells[cellIndex].length; i++) {
+                        for (let i = 0; i < this.cellList.cellCount[cellIndex]; i++) {
                             const particleIndex2 = this.cellList.cells[cellIndex][i]
                             if (particleIndex1 === particleIndex2) {
                                 continue
@@ -119,11 +126,11 @@ export default class LennardJones {
                             
                             const deltaR2 = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ
                             if (deltaR2 < this.rCut*this.rCut) {
-                                // const r = Math.sqrt(deltaR2)
+                                const r = Math.sqrt(deltaR2)
                                 const oneOverDr2 = 1.0/deltaR2
                                 const oneOverDr6 = oneOverDr2*oneOverDr2*oneOverDr2
                                 const force = epsilon24*sigma6*oneOverDr6*(2*sigma6*oneOverDr6 - 1)*oneOverDr2
-                                // const force = epsilon24 / deltaR2 * (2 * Math.pow(sigma/r, 12) - Math.pow(sigma/r, 6))
+                                // const force = epsilon24 / deltaR2 * (2 * Math.pow(this.sigma/r, 12) - Math.pow(this.sigma/r, 6))
                                 
                                 forces[3 * particleIndex1 + 0] += force * deltaX
                                 forces[3 * particleIndex1 + 1] += force * deltaY
@@ -134,6 +141,8 @@ export default class LennardJones {
                 }
             }
         }
+        const end = performance.now()
+        this.time += end-start
     }
 
     calculateNeighborList(numParticles: number, systemSize: number, positions: Float32Array, forces: Float32Array) {
@@ -143,9 +152,11 @@ export default class LennardJones {
         if (this.neighborList == null) {
             this.neighborList = new NeighborList()
         }
+        
         const rShell = 0.3
         this.cellList.build(positions, numParticles, systemSize, this.rCut + rShell)
         this.neighborList.build(numParticles, systemSize, this.rCut + rShell, this.cellList, positions)
+        const start = performance.now()
 
         const sigma6 = Math.pow(this.sigma, 6)
         const epsilon24 = 24 * this.epsilon
@@ -194,5 +205,7 @@ export default class LennardJones {
             }
           }
         }
+        const end = performance.now()
+        this.time += end-start
     }
 }

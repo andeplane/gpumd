@@ -11,23 +11,29 @@ export default class Integrator {
     timesteps: number
     mass: number
     potential: LennardJones
+    time: number
     
     constructor({dt, potential}: IntegratorProps) {
         this.dt = dt
         this.timesteps = 0
         this.mass = 1
         this.potential = potential
+        this.time = 0
     }
     
     halfKick(numParticles: number, positions: Float32Array, velocities: Float32Array, forces: Float32Array) {
+        const start = performance.now()
         for (let i = 0; i < numParticles; i++) {
             velocities[3 * i + 0] += forces[3 * i + 0] / this.mass * 0.5 * this.dt
             velocities[3 * i + 1] += forces[3 * i + 1] / this.mass * 0.5 * this.dt
             velocities[3 * i + 2] += forces[3 * i + 2] / this.mass * 0.5 * this.dt
         }
+        const end = performance.now()
+        this.time += end - start
     }
     
     move(numParticles: number, systemSize: number, positions: Float32Array, velocities: Float32Array) {
+        const start = performance.now()
         for (let i = 0; i < numParticles; i++) {
             positions[3 * i + 0] += velocities[3 * i + 0] * this.dt
             positions[3 * i + 1] += velocities[3 * i + 1] * this.dt
@@ -51,12 +57,15 @@ export default class Integrator {
                 positions[3 * i + 2] += systemSize
             }
         }
+        const end = performance.now()
+        this.time += end - start
     }
     
     integrate(system: System) {
         this.halfKick(system.particles.count, system.particles.positions, system.velocities, system.forces)
         this.move(system.particles.count, system.size, system.particles.positions, system.velocities)
-        this.potential.calculateAll(system.particles.count, system.size, system.particles.positions, system.forces)
+        // this.potential.calculateNeighborList(system.particles.count, system.size, system.particles.positions, system.forces)
+        this.potential.calculateCells(system.particles.count, system.size, system.particles.positions, system.forces)
         this.halfKick(system.particles.count, system.particles.positions, system.velocities, system.forces)
     }
 }

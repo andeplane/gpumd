@@ -29,10 +29,6 @@ function App() {
       newVisualizer.pointLight.intensity = 0.6
       newVisualizer.pointLight.decay = 2
       
-      let timeCellList = 0
-      let timeNeighborList = 0
-      let timeForces = 0
-
       const epsilon = 1.0
       const sigma = 3.405
       const rCut = 2.5 * sigma
@@ -40,7 +36,9 @@ function App() {
       const potential = new LennardJones({epsilon, sigma, rCut})
       const integrator = new Integrator({dt, potential})
       const system = new System({capacity: 10000})
-      system.createFCC(3, sigma)
+      system.createFCC(10, sigma)
+      // system.size = 40
+      system.resetVelocities(50.0)
       
       newVisualizer.add(system.particles)
       window.onkeydown = (ev) => {
@@ -54,12 +52,13 @@ function App() {
 
       let timestepCount = 0
       setInterval(() => {
+        console.log(`Integrating ${system.particles.count} particles`)
         integrator.integrate(system)
         system.particles.markNeedsUpdate()
         if (++timestepCount % 100 === 0) {
-          // console.log(`Time: Cell list: ${timeCellList / timestepCount} neighbor list: ${timeNeighborList / timestepCount} forces: ${timeForces / timestepCount}`)
+          console.log(`Time: Cell list: ${ ((potential.cellList ? potential.cellList.time : 0) / timestepCount).toPrecision(3)} neighbor list: ${((potential.neighborList ? potential.neighborList.time : 0) / timestepCount).toPrecision(3)} forces: ${(potential.time / timestepCount).toPrecision(3)} integrate: ${(integrator.time / timestepCount).toPrecision(3)}`)
         }
-      }, 10)
+      }, 1)
     }
   }, [domElement, setVisualizer, visualizer])
 
