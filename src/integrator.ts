@@ -65,7 +65,7 @@ export default class Integrator {
         this.halfKick(system.particles.count, system.particles.positions, system.velocities, system.forces)
         this.move(system.particles.count, system.size, system.particles.positions, system.velocities)
         // this.potential.calculateNeighborList(system.particles.count, system.size, system.particles.positions, system.forces)
-        this.potential.calculateCells(system.particles.count, system.size, system.particles.positions, system.forces)
+        this.potential.calculateGPU(system.particles.count, system.size, system.particles.positions, system.forces)
         this.halfKick(system.particles.count, system.particles.positions, system.velocities, system.forces)
     }
 }
